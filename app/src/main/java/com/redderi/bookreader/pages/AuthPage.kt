@@ -23,8 +23,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
-import com.redderi.bookreader.utils.*
+import com.redderi.bookreader.utils.loginUser
+import com.redderi.bookreader.utils.registerUser
 
 @Composable
 fun AuthPage(navController: NavController, onLoginSuccess: (String) -> Unit) {
@@ -41,52 +41,48 @@ fun AuthPage(navController: NavController, onLoginSuccess: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = if (isLogin) "Вход" else "Регистрация", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = if (isLogin) "Вход" else "Регистрация",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
 
         TextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Имя пользователя") }
+            label = { Text("Имя пользователя") },
+            isError = username.text.isEmpty() && errorMessage.isEmpty()
         )
+
         TextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Пароль") },
-            visualTransformation = VisualTransformation.None
+            visualTransformation = VisualTransformation.None,
+            isError = password.text.isEmpty() && errorMessage.isEmpty()
         )
+
         if (!isLogin) {
             TextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
                 label = { Text("Повторите пароль") },
-                visualTransformation = VisualTransformation.None
+                visualTransformation = VisualTransformation.None,
+                isError = confirmPassword.text.isEmpty() && errorMessage.isEmpty()
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            if (isLogin) {
-                // Вход пользователя
-                loginUser(username.text, password.text, navController) { success, message ->
-                    if (success) {
-                        // Сохраняем имя пользователя и переходим на страницу книг
-                        onLoginSuccess(username.text)
-                        navController.navigate("books") {
-                            popUpTo("auth") { inclusive = true }
-                        }
-                    } else {
-                        errorMessage = message
-                    }
-                }
+            if (username.text.isBlank() || password.text.isBlank() || (!isLogin && confirmPassword.text.isBlank())) {
+                errorMessage = "Пожалуйста, заполните все поля"
             } else {
-                // Регистрация пользователя
-                if (password.text == confirmPassword.text) {
-                    registerUser(username.text, password.text) { success, message ->
+                if (isLogin) {
+                    loginUser(username.text, password.text) { success, message ->
                         if (success) {
-                            // Переключаемся на страницу книг после успешной регистрации
                             onLoginSuccess(username.text)
-                            navController.navigate("books") {
+                            navController.navigate("books/${username.text}") {
                                 popUpTo("auth") { inclusive = true }
                             }
                         } else {
@@ -94,7 +90,20 @@ fun AuthPage(navController: NavController, onLoginSuccess: (String) -> Unit) {
                         }
                     }
                 } else {
-                    errorMessage = "Пароли не совпадают"
+                    if (password.text == confirmPassword.text) {
+                        registerUser(username.text, password.text) { success, message ->
+                            if (success) {
+                                onLoginSuccess(username.text)
+                                navController.navigate("books/${username.text}") {
+                                    popUpTo("auth") { inclusive = true }
+                                }
+                            } else {
+                                errorMessage = message
+                            }
+                        }
+                    } else {
+                        errorMessage = "Пароли не совпадают"
+                    }
                 }
             }
         }) {

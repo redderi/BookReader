@@ -11,10 +11,9 @@ import androidx.navigation.NavController
 import com.redderi.bookreader.R
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
-    NavigationBar(containerColor = Color.Gray) {
+fun BottomNavigationBar(navController: NavController, username: String) {
+    NavigationBar(containerColor = Color(0xFFD0BCFF)) {
         val pages = listOf(
-            Pair("Read Setup", R.drawable.settings_suggest_24dp),
             Pair("Quotes", R.drawable.bookmarks_24dp),
             Pair("Books", R.drawable.menu_book_24dp),
             Pair("Settings", R.drawable.settings_24dp),
@@ -23,11 +22,10 @@ fun BottomNavigationBar(navController: NavController) {
 
         pages.forEachIndexed { index, (label, iconId) ->
             val route = when (index) {
-                0 -> "readSetup"
-                1 -> "quotes"
-                2 -> "books"
-                3 -> "settings"
-                4 -> "account"
+                0 -> "quotes/$username"
+                1 -> "books/$username"
+                2 -> "settings"
+                3 -> "account"
                 else -> "books"
             }
             NavigationBarItem(
@@ -39,7 +37,9 @@ fun BottomNavigationBar(navController: NavController) {
                     )
                 },
                 selected = navController.currentDestination?.route == route,
-                onClick = { navController.navigate(route) }
+                onClick = {
+                    navController.navigate(route)
+                }
             )
         }
     }
